@@ -808,86 +808,151 @@ function updateDashboard() {
 // ===== PROBLEM GENERATORS =====
 
 // --- STATION 1: Scaling Orders ---
+// Each recipe has REALISTIC ingredient ratios that make real-world sense
 function generateScalingProblem(difficulty) {
+  // Realistic recipes: each has a batch size and realistic per-batch ingredient amounts
   const recipes = [
-    { name: 'pancakes', emoji: '🥞', ingredient: 'eggs', ingredientEmoji: '🥚' },
-    { name: 'cookies', emoji: '🍪', ingredient: 'cups of flour', ingredientEmoji: '🌾' },
-    { name: 'muffins', emoji: '🧁', ingredient: 'eggs', ingredientEmoji: '🥚' },
-    { name: 'tacos', emoji: '🌮', ingredient: 'cups of meat', ingredientEmoji: '🥩' },
-    { name: 'burgers', emoji: '🍔', ingredient: 'burger patties', ingredientEmoji: '🥩' },
-    { name: 'sandwiches', emoji: '🥪', ingredient: 'slices of bread', ingredientEmoji: '🍞' },
-    { name: 'pizzas', emoji: '🍕', ingredient: 'cups of cheese', ingredientEmoji: '🧀' },
-    { name: 'omelets', emoji: '🍳', ingredient: 'eggs', ingredientEmoji: '🥚' },
-    { name: 'waffles', emoji: '🧇', ingredient: 'eggs', ingredientEmoji: '🥚' },
-    { name: 'biscuits', emoji: '🫓', ingredient: 'cups of flour', ingredientEmoji: '🌾' },
+    // batchMakes: how many the recipe produces
+    // ingredients: array of {name, emoji, perBatch} - realistic amounts per batch
+    { name: 'pancakes', single: 'pancake', emoji: '🥞', batchMakes: 6,
+      ingredients: [
+        { name: 'eggs', emoji: '🥚', perBatch: 2 },
+        { name: 'cups of flour', emoji: '🌾', perBatch: 2 },
+      ]},
+    { name: 'cookies', single: 'cookie', emoji: '🍪', batchMakes: 12,
+      ingredients: [
+        { name: 'eggs', emoji: '🥚', perBatch: 2 },
+        { name: 'cups of sugar', emoji: '🍬', perBatch: 1 },
+        { name: 'cups of flour', emoji: '🌾', perBatch: 3 },
+      ]},
+    { name: 'muffins', single: 'muffin', emoji: '🧁', batchMakes: 12,
+      ingredients: [
+        { name: 'eggs', emoji: '🥚', perBatch: 2 },
+        { name: 'cups of flour', emoji: '🌾', perBatch: 2 },
+      ]},
+    { name: 'omelets', single: 'omelet', emoji: '🍳', batchMakes: 1,
+      ingredients: [
+        { name: 'eggs', emoji: '🥚', perBatch: 3 },
+      ]},
+    { name: 'waffles', single: 'waffle', emoji: '🧇', batchMakes: 4,
+      ingredients: [
+        { name: 'eggs', emoji: '🥚', perBatch: 2 },
+        { name: 'cups of flour', emoji: '🌾', perBatch: 2 },
+      ]},
+    { name: 'burgers', single: 'burger', emoji: '🍔', batchMakes: 1,
+      ingredients: [
+        { name: 'burger patties', emoji: '🥩', perBatch: 1 },
+        { name: 'burger buns', emoji: '🍞', perBatch: 1 },
+      ]},
+    { name: 'tacos', single: 'taco', emoji: '🌮', batchMakes: 6,
+      ingredients: [
+        { name: 'taco shells', emoji: '🌮', perBatch: 6 },
+        { name: 'cups of meat', emoji: '🥩', perBatch: 2 },
+      ]},
+    { name: 'sandwiches', single: 'sandwich', emoji: '🥪', batchMakes: 1,
+      ingredients: [
+        { name: 'slices of bread', emoji: '🍞', perBatch: 2 },
+      ]},
+    { name: 'pizzas', single: 'pizza', emoji: '🍕', batchMakes: 1,
+      ingredients: [
+        { name: 'cups of cheese', emoji: '🧀', perBatch: 2 },
+        { name: 'cups of sauce', emoji: '🍅', perBatch: 1 },
+      ]},
+    { name: 'biscuits', single: 'biscuit', emoji: '🫓', batchMakes: 8,
+      ingredients: [
+        { name: 'cups of flour', emoji: '🌾', perBatch: 2 },
+        { name: 'eggs', emoji: '🥚', perBatch: 1 },
+      ]},
   ];
 
   const r = recipes[Math.floor(Math.random() * recipes.length)];
-  let batchSize, perOrder, customers, perBatch;
+  // Pick a random ingredient from this recipe
+  const ing = r.ingredients[Math.floor(Math.random() * r.ingredients.length)];
 
   if (difficulty <= 2) {
-    // Easy: direct multiplication
-    perOrder = 1;
-    customers = randBetween(2, 6);
-    perBatch = randBetween(1, 2);
-    batchSize = customers; // 1 batch makes exactly what 1 customer needs
-    const answer = customers * perBatch;
-    return {
-      type: 'multiple_choice',
-      skill: 'scaling_easy',
-      scenario: `You're making ${r.emoji} ${r.name}.\nEach order needs <em>${perOrder} ${r.name.slice(0, -1)}</em>.\nEach ${r.name.slice(0, -1)} uses <em>${perBatch} ${r.ingredient}</em>.\nYou have <em>${customers} customers</em>.`,
-      question: `How many ${r.ingredient} ${r.ingredientEmoji} do you need total?`,
-      answer: answer,
-      explanation: [
-        { icon: '👥', text: `${customers} customers, each gets ${perOrder}`, math: `${customers} ${r.name}` },
-        { icon: r.ingredientEmoji, text: `Each needs ${perBatch} ${r.ingredient}`, math: `${customers} × ${perBatch} = ${answer}` },
-        { icon: '✅', text: `You need ${answer} ${r.ingredient} total!`, math: '' },
-      ],
-      difficulty,
-    };
+    // Easy: simple "each customer gets 1, how many ingredients?"
+    // Use recipes where batchMakes=1 for simplest math, or small numbers
+    const customers = randBetween(2, 6);
+    if (r.batchMakes === 1) {
+      // 1:1 — each customer gets 1 item, each item uses X ingredients
+      const answer = customers * ing.perBatch;
+      return {
+        type: 'multiple_choice',
+        skill: 'scaling_easy',
+        scenario: `You're making ${r.emoji} ${r.name}.\nEach ${r.single} uses <em>${ing.perBatch} ${ing.name}</em>.\nYou have <em>${customers} customers</em> who each want <em>1 ${r.single}</em>.`,
+        question: `How many ${ing.name} ${ing.emoji} do you need total?`,
+        answer: answer,
+        explanation: [
+          { icon: '👥', text: `${customers} customers × 1 ${r.single} each`, math: `= ${customers} ${r.name}` },
+          { icon: ing.emoji, text: `Each ${r.single} uses ${ing.perBatch} ${ing.name}`, math: `${customers} × ${ing.perBatch} = ${answer}` },
+          { icon: '✅', text: `You need ${answer} ${ing.name} total!`, math: '' },
+        ],
+        difficulty,
+      };
+    } else {
+      // Batch recipe, but simple: just 1 batch worth of customers
+      const perOrder = 1;
+      const totalNeeded = customers * perOrder;
+      const batches = Math.ceil(totalNeeded / r.batchMakes);
+      const answer = batches * ing.perBatch;
+      return {
+        type: 'multiple_choice',
+        skill: 'scaling_easy',
+        scenario: `Your ${r.emoji} ${r.name} recipe makes <em>${r.batchMakes} ${r.name}</em> and uses <em>${ing.perBatch} ${ing.name}</em>.\nYou have <em>${customers} customers</em> who each want <em>1 ${r.single}</em>.`,
+        question: `How many ${ing.name} ${ing.emoji} do you need?`,
+        answer: answer,
+        explanation: [
+          { icon: '👥', text: `${customers} customers × 1 each`, math: `= ${customers} ${r.name} needed` },
+          { icon: '📦', text: `Recipe makes ${r.batchMakes} per batch`, math: `${customers} ÷ ${r.batchMakes} = ${batches} batch${batches > 1 ? 'es' : ''} (round up!)` },
+          { icon: ing.emoji, text: `Each batch uses ${ing.perBatch} ${ing.name}`, math: `${batches} × ${ing.perBatch} = ${answer}` },
+          { icon: '✅', text: `You need ${answer} ${ing.name}!`, math: '' },
+        ],
+        difficulty,
+      };
+    }
   } else if (difficulty <= 4) {
-    // Medium: batch math
-    batchSize = randFromList([4, 6, 8, 12]);
-    perOrder = randFromList([2, 3, 4]);
-    customers = randBetween(3, 8);
-    perBatch = randBetween(1, 3);
+    // Medium: multiple per order, batch math
+    const perOrder = r.batchMakes === 1 ? randBetween(1, 2) : randFromList([2, 3]);
+    const customers = randBetween(3, 8);
     const totalNeeded = customers * perOrder;
-    const batches = Math.ceil(totalNeeded / batchSize);
-    const answer = batches * perBatch;
+    const batches = Math.ceil(totalNeeded / r.batchMakes);
+    const answer = batches * ing.perBatch;
+    const orderWord = perOrder === 1 ? r.single : r.name;
+
     return {
       type: 'multiple_choice',
       skill: 'scaling_medium',
-      scenario: `Your ${r.emoji} ${r.name} recipe makes <em>${batchSize} ${r.name}</em> per batch.\nIt uses <em>${perBatch} ${r.ingredient}</em> per batch.\nEach customer orders <em>${perOrder} ${r.name}</em>.\nYou have <em>${customers} customers</em>.`,
-      question: `How many ${r.ingredient} ${r.ingredientEmoji} do you need?`,
+      scenario: `Your ${r.emoji} ${r.name} recipe makes <em>${r.batchMakes} ${r.batchMakes === 1 ? r.single : r.name}</em> per batch.\nIt uses <em>${ing.perBatch} ${ing.name}</em> per batch.\nEach of your <em>${customers} customers</em> orders <em>${perOrder} ${orderWord}</em>.`,
+      question: `How many ${ing.name} ${ing.emoji} do you need?`,
       answer: answer,
       explanation: [
         { icon: '👥', text: `${customers} customers × ${perOrder} each`, math: `= ${totalNeeded} ${r.name} total` },
-        { icon: '📦', text: `Each batch makes ${batchSize}`, math: `${totalNeeded} ÷ ${batchSize} = ${batches} batch${batches > 1 ? 'es' : ''}` },
-        { icon: r.ingredientEmoji, text: `Each batch uses ${perBatch}`, math: `${batches} × ${perBatch} = ${answer} ${r.ingredient}` },
-        { icon: '✅', text: `You need ${answer} ${r.ingredient}!`, math: '' },
+        { icon: '📦', text: `Each batch makes ${r.batchMakes}`, math: `${totalNeeded} ÷ ${r.batchMakes} = ${batches} batch${batches > 1 ? 'es' : ''} (round up!)` },
+        { icon: ing.emoji, text: `Each batch uses ${ing.perBatch} ${ing.name}`, math: `${batches} × ${ing.perBatch} = ${answer}` },
+        { icon: '✅', text: `You need ${answer} ${ing.name}!`, math: '' },
       ],
       difficulty,
     };
   } else {
-    // Hard: bigger numbers, more steps
-    batchSize = randFromList([6, 8, 10, 12]);
-    perOrder = randFromList([2, 3, 4, 5]);
-    customers = randBetween(8, 15);
-    perBatch = randBetween(2, 4);
+    // Hard: bigger numbers, more steps — like the original pancake problem
+    const perOrder = r.batchMakes === 1 ? randBetween(1, 3) : randFromList([2, 3, 4]);
+    const customers = randBetween(8, 15);
     const totalNeeded = customers * perOrder;
-    const batches = Math.ceil(totalNeeded / batchSize);
-    const answer = batches * perBatch;
+    const batches = Math.ceil(totalNeeded / r.batchMakes);
+    const answer = batches * ing.perBatch;
+    const orderWord = perOrder === 1 ? r.single : r.name;
+
     return {
       type: 'multiple_choice',
       skill: 'scaling_hard',
-      scenario: `Big night! Your ${r.emoji} ${r.name} recipe makes <em>${batchSize} per batch</em> and uses <em>${perBatch} ${r.ingredient}</em> per batch.\nEach of your <em>${customers} customers</em> wants <em>${perOrder} ${r.name}</em>.`,
-      question: `How many ${r.ingredient} ${r.ingredientEmoji} do you need total?`,
+      scenario: `Big night! Your ${r.emoji} ${r.name} recipe makes <em>${r.batchMakes} ${r.batchMakes === 1 ? r.single : r.name}</em> per batch and uses <em>${ing.perBatch} ${ing.name}</em> per batch.\nEach of your <em>${customers} customers</em> wants <em>${perOrder} ${orderWord}</em>.`,
+      question: `How many ${ing.name} ${ing.emoji} do you need total?`,
       answer: answer,
       explanation: [
         { icon: '👥', text: `${customers} customers × ${perOrder} each`, math: `= ${totalNeeded} ${r.name} total` },
-        { icon: '📦', text: `Recipe makes ${batchSize} per batch`, math: `${totalNeeded} ÷ ${batchSize} = ${batches} batch${batches > 1 ? 'es' : ''} (round up!)` },
-        { icon: r.ingredientEmoji, text: `${batches} batches × ${perBatch} ${r.ingredient}`, math: `= ${answer}` },
-        { icon: '✅', text: `Answer: ${answer} ${r.ingredient}!`, math: '' },
+        { icon: '📦', text: `Recipe makes ${r.batchMakes} per batch`, math: `${totalNeeded} ÷ ${r.batchMakes} = ${batches} batch${batches > 1 ? 'es' : ''} (round up!)` },
+        { icon: ing.emoji, text: `${batches} batches × ${ing.perBatch} ${ing.name}`, math: `= ${answer}` },
+        { icon: '✅', text: `Answer: ${answer} ${ing.name}!`, math: '' },
       ],
       difficulty,
     };
