@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ChefMath - Kitchen Math Trainer</title>
+<style>
+/* ===== RESET & BASE ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --orange: #FF6B35;
+  --orange-dark: #E55A2B;
+  --green: #2ECC71;
+  --green-dark: #27AE60;
+  --red: #E74C3C;
+  --blue: #3498DB;
+  --purple: #9B59B6;
+  --gold: #F1C40F;
+  --dark: #2C3E50;
+  --darker: #1a252f;
+  --gray: #7F8C8D;
+  --light: #ECF0F1;
+  --white: #FFFFFF;
+  --bg: #1a1a2e;
+  --card: #16213e;
+  --card-light: #1c2a4a;
+}
+body {
+  font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--white);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.2s;
+}
+button:active { transform: scale(0.96); }
+
+/* ===== SCREENS ===== */
+.screen { display: none; min-height: 100vh; padding: 20px; max-width: 500px; margin: 0 auto; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ===== DASHBOARD ===== */
+#dashboard { align-items: center; gap: 20px; padding-top: 40px; }
+.chef-avatar {
+  width: 120px; height: 120px;
+  background: var(--card);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 60px;
+  border: 4px solid var(--orange);
+  position: relative;
+}
+.chef-rank {
+  position: absolute; bottom: -10px;
+  background: var(--orange);
+  color: white;
+  padding: 2px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.app-title {
+  font-size: 32px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--orange), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.app-subtitle { color: var(--gray); font-size: 14px; margin-top: -10px; }
+
+.stats-row {
+  display: flex; gap: 12px; width: 100%;
+}
+.stat-card {
+  flex: 1;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+.stat-value { font-size: 28px; font-weight: 800; }
+.stat-label { font-size: 11px; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+.streak-value { color: var(--orange); }
+.tips-value { color: var(--green); }
+.level-value { color: var(--blue); }
+
+/* Station cards */
+.stations-header { font-size: 14px; color: var(--gray); text-transform: uppercase; letter-spacing: 2px; align-self: flex-start; margin-top: 10px; }
+.station-card {
+  width: 100%;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 2px solid transparent;
+  transition: all 0.3s;
+}
+.station-card:not(.locked):hover { border-color: var(--orange); }
+.station-card.locked { opacity: 0.4; }
+.station-icon { font-size: 40px; }
+.station-info { flex: 1; }
+.station-name { font-size: 18px; font-weight: 700; }
+.station-desc { font-size: 13px; color: var(--gray); margin-top: 2px; }
+.station-progress {
+  width: 100%; height: 6px;
+  background: var(--darker);
+  border-radius: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.station-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--orange), var(--gold));
+  border-radius: 3px;
+  transition: width 0.5s;
+}
+.station-badge {
+  font-size: 24px;
+}
+.lock-icon { font-size: 24px; color: var(--gray); }
+
+.start-shift-btn {
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+  color: white;
+  font-size: 20px;
+  font-weight: 800;
+  border-radius: 16px;
+  margin-top: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 15px rgba(255,107,53,0.3);
+}
+.start-shift-btn:hover { box-shadow: 0 6px 25px rgba(255,107,53,0.5); transform: translateY(-2px); }
+
+/* ===== GAME SCREEN ===== */
+#game { padding-top: 10px; gap: 0; }
+.game-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0;
+}
+.game-phase {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--orange);
+  font-weight: 700;
+}
+.game-progress-bar {
+  width: 100%; height: 8px;
+  background: var(--darker);
+  border-radius: 4px;
+  margin: 8px 0 16px;
+  overflow: hidden;
+}
+.game-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--orange), var(--gold));
+  border-radius: 4px;
+  transition: width 0.4s;
+  width: 0%;
+}
+.tip-jar {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+/* Order ticket */
+.order-ticket {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 24px;
+  border-left: 5px solid var(--orange);
+  margin-bottom: 16px;
+  position: relative;
+  animation: slideIn 0.3s ease;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ticket-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+.ticket-number {
+  font-size: 12px;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.ticket-difficulty {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+.diff-easy { background: rgba(46,204,113,0.2); color: var(--green); }
+.diff-medium { background: rgba(241,196,15,0.2); color: var(--gold); }
+.diff-hard { background: rgba(231,76,60,0.2); color: var(--red); }
+
+.ticket-scenario {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.ticket-scenario em {
+  color: var(--gold);
+  font-style: normal;
+  font-weight: 700;
+}
+.ticket-question {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--orange);
+  margin-bottom: 16px;
+}
+
+/* Answer area */
+.answer-area { display: flex; flex-direction: column; gap: 10px; }
+.answer-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.answer-btn {
+  padding: 16px;
+  background: var(--card-light);
+  border: 2px solid var(--darker);
+  border-radius: 14px;
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+.answer-btn:hover { border-color: var(--orange); background: rgba(255,107,53,0.1); }
+.answer-btn.correct {
+  border-color: var(--green);
+  background: rgba(46,204,113,0.2);
+  animation: correctPop 0.4s ease;
+}
+.answer-btn.wrong {
+  border-color: var(--red);
+  background: rgba(231,76,60,0.2);
+  animation: shake 0.4s ease;
+}
+@keyframes correctPop {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* Show me / hint */
+.show-me-btn {
+  padding: 12px;
+  background: transparent;
+  border: 1px solid var(--gray);
+  border-radius: 12px;
+  color: var(--gray);
+  font-size: 14px;
+  margin-top: 4px;
+}
+.show-me-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+/* Visual workspace */
+.visual-workspace {
+  background: var(--darker);
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 12px;
+  display: none;
+  animation: slideIn 0.3s ease;
+}
+.visual-workspace.visible { display: block; }
+.workspace-title {
+  font-size: 13px;
+  color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+.workspace-step {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0;
+  font-size: 15px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.workspace-step:last-child { border-bottom: none; }
+.step-icon { font-size: 20px; }
+.step-math {
+  color: var(--gold);
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+}
+
+/* Measuring cups visual */
+.cups-visual {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.cup-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.cup-container:hover { transform: scale(1.08); }
+.cup-container.selected { transform: scale(1.1); }
+.cup-container.selected .cup-body { border-color: var(--orange); }
+.cup-body {
+  width: 60px;
+  position: relative;
+  background: var(--card);
+  border: 3px solid var(--gray);
+  border-radius: 4px 4px 8px 8px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.cup-fill {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: linear-gradient(180deg, #5dade2, #3498db);
+  transition: height 0.4s ease;
+}
+.cup-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray);
+}
+.cup-container.selected .cup-label { color: var(--orange); }
+
+/* Target bowl */
+.target-bowl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+}
+.bowl-visual {
+  width: 140px;
+  height: 80px;
+  border: 3px solid var(--gray);
+  border-radius: 0 0 70px 70px;
+  position: relative;
+  overflow: hidden;
+  background: var(--card);
+}
+.bowl-fill {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: linear-gradient(180deg, #5dade2, #3498db);
+  transition: height 0.5s ease;
+}
+.bowl-target-line {
+  position: absolute;
+  width: 100%;
+  border-top: 2px dashed var(--gold);
+  z-index: 2;
+}
+.bowl-label {
+  font-size: 14px;
+  color: var(--gray);
+}
+.bowl-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+/* Cup interaction buttons */
+.cup-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.cup-action-btn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+}
+.pour-btn { background: var(--blue); }
+.pour-btn:hover { background: #2980b9; }
+.reset-bowl-btn { background: var(--gray); }
+.done-btn { background: var(--green); }
+.done-btn:hover { background: var(--green-dark); }
+
+/* Feedback overlay */
+.feedback {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  background: rgba(0,0,0,0.7);
+  animation: fadeIn 0.2s;
+}
+.feedback.visible { display: flex; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.feedback-card {
+  background: var(--card);
+  border-radius: 24px;
+  padding: 32px;
+  text-align: center;
+  max-width: 340px;
+  width: 90%;
+  animation: popIn 0.3s ease;
+}
+@keyframes popIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.feedback-emoji { font-size: 60px; margin-bottom: 12px; }
+.feedback-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+.feedback-msg { color: var(--gray); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+.feedback-btn {
+  padding: 14px 32px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+}
+.fb-correct { background: var(--green); }
+.fb-wrong { background: var(--orange); }
+
+/* ===== REVIEW SCREEN ===== */
+#review { align-items: center; gap: 20px; padding-top: 60px; }
+.review-emoji { font-size: 80px; }
+.review-title { font-size: 28px; font-weight: 800; }
+.review-subtitle { color: var(--gray); text-align: center; }
+.review-stats {
+  width: 100%;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 20px;
+}
+.review-stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.review-stat-row:last-child { border-bottom: none; }
+.review-stat-label { color: var(--gray); }
+.review-stat-value { font-weight: 700; }
+.review-tips { color: var(--green); }
+.review-accuracy { color: var(--blue); }
+.review-streak-bonus { color: var(--gold); }
+
+.rank-up-banner {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(241,196,15,0.2));
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  display: none;
+}
+.rank-up-banner.visible { display: block; }
+.rank-up-emoji { font-size: 40px; }
+.rank-up-text { font-size: 14px; color: var(--gold); margin-top: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.rank-up-name { font-size: 22px; font-weight: 800; margin-top: 4px; }
+
+.back-btn {
+  width: 100%;
+  padding: 16px;
+  background: var(--card);
+  border: 2px solid var(--orange);
+  color: var(--orange);
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 14px;
+}
+.back-btn:hover { background: rgba(255,107,53,0.1); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 400px) {
+  .screen { padding: 12px; }
+  .ticket-scenario { font-size: 15px; }
+  .answer-btn { padding: 14px; font-size: 18px; }
+  .cup-body { width: 50px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== DASHBOARD SCREEN ===== -->
+<div id="dashboard" class="screen active">
+  <div class="chef-avatar">
+    <span id="avatarEmoji">🧑‍🍳</span>
+    <div class="chef-rank" id="chefRank">Prep Cook</div>
+  </div>
+  <div class="app-title">ChefMath</div>
+  <div class="app-subtitle">Kitchen Math Trainer</div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value streak-value" id="streakCount">0</div>
+      <div class="stat-label">Day Streak 🔥</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value tips-value" id="totalTips">$0</div>
+      <div class="stat-label">Tips Earned</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value level-value" id="levelNum">1</div>
+      <div class="stat-label">Level</div>
+    </div>
+  </div>
+
+  <div class="stations-header">Your Stations</div>
+
+  <div class="station-card" id="station1Card" onclick="startStation(1)">
+    <div class="station-icon">🍳</div>
+    <div class="station-info">
+      <div class="station-name">Scaling Orders</div>
+      <div class="station-desc">Multiply recipes to fill customer orders</div>
+      <div class="station-progress"><div class="station-progress-fill" id="station1Progress" style="width:0%"></div></div>
+    </div>
+    <div class="station-badge" id="station1Badge">🥉</div>
+  </div>
+
+  <div class="station-card" id="station2Card" onclick="startStation(2)">
+    <div class="station-icon">🥛</div>
+    <div class="station-info">
+      <div class="station-name">Measure It Out</div>
+      <div class="station-desc">Master fractions with measuring cups</div>
+      <div class="station-progress"><div class="station-progress-fill" id="station2Progress" style="width:0%"></div></div>
+    </div>
+    <div class="station-badge" id="station2Badge">🔒</div>
+  </div>
+
+  <div class="station-card" id="station3Card" onclick="startStation(3)">
+    <div class="station-icon">⚖️</div>
+    <div class="station-info">
+      <div class="station-name">Kitchen Conversions</div>
+      <div class="station-desc">Convert between measurements like a pro</div>
+      <div class="station-progress"><div class="station-progress-fill" id="station3Progress" style="width:0%"></div></div>
+    </div>
+    <div class="station-badge" id="station3Badge">🔒</div>
+  </div>
+
+  <button class="start-shift-btn" onclick="startShift()">
+    🔥 Start Your Shift
+  </button>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="game" class="screen">
+  <div class="game-header">
+    <div class="game-phase" id="gamePhase">Warmup</div>
+    <div class="tip-jar">💰 $<span id="shiftTips">0</span></div>
+  </div>
+  <div class="game-progress-bar">
+    <div class="game-progress-fill" id="gameProgressFill"></div>
+  </div>
+  <div id="questionArea"></div>
+</div>
+
+<!-- ===== FEEDBACK OVERLAY ===== -->
+<div class="feedback" id="feedbackOverlay">
+  <div class="feedback-card">
+    <div class="feedback-emoji" id="fbEmoji">🎉</div>
+    <div class="feedback-title" id="fbTitle">Nice!</div>
+    <div class="feedback-msg" id="fbMsg"></div>
+    <button class="feedback-btn" id="fbBtn" onclick="closeFeedback()">Continue</button>
+  </div>
+</div>
+
+<!-- ===== REVIEW SCREEN ===== -->
+<div id="review" class="screen">
+  <div class="review-emoji" id="reviewEmoji">🎉</div>
+  <div class="review-title" id="reviewTitle">Shift Complete!</div>
+  <div class="review-subtitle" id="reviewSubtitle">Great work today, Chef!</div>
+
+  <div class="review-stats">
+    <div class="review-stat-row">
+      <div class="review-stat-label">Orders Completed</div>
+      <div class="review-stat-value" id="revOrders">0/0</div>
+    </div>
+    <div class="review-stat-row">
+      <div class="review-stat-label">Accuracy</div>
+      <div class="review-stat-value review-accuracy" id="revAccuracy">0%</div>
+    </div>
+    <div class="review-stat-row">
+      <div class="review-stat-label">Tips Earned</div>
+      <div class="review-stat-value review-tips" id="revTips">$0</div>
+    </div>
+    <div class="review-stat-row">
+      <div class="review-stat-label">Streak Bonus</div>
+      <div class="review-stat-value review-streak-bonus" id="revStreakBonus">+$0</div>
+    </div>
+  </div>
+
+  <div class="rank-up-banner" id="rankUpBanner">
+    <div class="rank-up-emoji">🎊👨‍🍳🎊</div>
+    <div class="rank-up-text">Promoted to</div>
+    <div class="rank-up-name" id="rankUpName"></div>
+  </div>
+
+  <button class="back-btn" onclick="backToDashboard()">Back to Kitchen</button>
+</div>
+
+<script>
+// ===== SOUND ENGINE (Web Audio API - no files needed) =====
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playTone(freq, duration, type = 'sine', volume = 0.3) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(volume, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+
+const SFX = {
+  correct() {
+    // Bright ascending chime
+    playTone(523, 0.12, 'sine', 0.25);   // C5
+    setTimeout(() => playTone(659, 0.12, 'sine', 0.25), 80);  // E5
+    setTimeout(() => playTone(784, 0.25, 'sine', 0.2), 160);  // G5
+  },
+  wrong() {
+    // Soft low buzz
+    playTone(220, 0.15, 'triangle', 0.2);
+    setTimeout(() => playTone(180, 0.25, 'triangle', 0.15), 100);
+  },
+  tip() {
+    // Cash register cha-ching
+    playTone(1200, 0.06, 'square', 0.1);
+    setTimeout(() => playTone(1500, 0.06, 'square', 0.1), 60);
+    setTimeout(() => playTone(2000, 0.15, 'sine', 0.12), 120);
+  },
+  levelUp() {
+    // Fanfare
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((n, i) => {
+      setTimeout(() => playTone(n, 0.2, 'sine', 0.2), i * 120);
+    });
+    setTimeout(() => {
+      playTone(1047, 0.4, 'sine', 0.25);
+      playTone(784, 0.4, 'sine', 0.15);
+    }, 500);
+  },
+  tap() {
+    // Subtle click
+    playTone(800, 0.03, 'sine', 0.1);
+  },
+  newOrder() {
+    // Ticket printer sound - short rising tone
+    playTone(400, 0.05, 'square', 0.08);
+    setTimeout(() => playTone(600, 0.05, 'square', 0.08), 50);
+  },
+  shiftEnd() {
+    // Bell ding
+    playTone(880, 0.08, 'sine', 0.2);
+    setTimeout(() => playTone(1760, 0.3, 'sine', 0.15), 100);
+  },
+  rankUp() {
+    // Grand fanfare
+    const melody = [523, 523, 659, 784, 784, 659, 784, 1047];
+    melody.forEach((n, i) => {
+      setTimeout(() => playTone(n, 0.18, 'sine', 0.2), i * 100);
+    });
+  }
+};
+
+// ===== GAME STATE =====
+const DEFAULT_STATE = {
+  streak: 0,
+  lastPlayDate: null,
+  totalTips: 0,
+  level: 1,
+  xp: 0,
+  station1Mastery: 0,
+  station2Mastery: 0,
+  station3Mastery: 0,
+  station1Unlocked: true,
+  station2Unlocked: false,
+  station3Unlocked: false,
+  skillHistory: {},
+  totalShifts: 0,
+};
+
+let state = loadState();
+let shiftState = {};
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem('chefmath_state'));
+    return s ? { ...DEFAULT_STATE, ...s } : { ...DEFAULT_STATE };
+  } catch { return { ...DEFAULT_STATE }; }
+}
+function saveState() { localStorage.setItem('chefmath_state', JSON.stringify(state)); }
+
+// ===== RANKS =====
+const RANKS = [
+  { name: 'Prep Cook', minLevel: 1, emoji: '🧑‍🍳' },
+  { name: 'Line Cook', minLevel: 3, emoji: '🧑‍🍳' },
+  { name: 'Station Chef', minLevel: 6, emoji: '👨‍🍳' },
+  { name: 'Sous Chef', minLevel: 10, emoji: '👨‍🍳' },
+  { name: 'Head Chef', minLevel: 15, emoji: '👩‍🍳' },
+  { name: 'Executive Chef', minLevel: 20, emoji: '👩‍🍳' },
+];
+
+function getRank(level) {
+  let rank = RANKS[0];
+  for (const r of RANKS) { if (level >= r.minLevel) rank = r; }
+  return rank;
+}
+function getBadge(mastery) {
+  if (mastery >= 80) return '🏆';
+  if (mastery >= 60) return '🥇';
+  if (mastery >= 40) return '🥈';
+  if (mastery >= 20) return '🥉';
+  return '⭐';
+}
+
+// ===== DASHBOARD =====
+function updateDashboard() {
+  const today = new Date().toDateString();
+  if (state.lastPlayDate && state.lastPlayDate !== today) {
+    const last = new Date(state.lastPlayDate);
+    const diff = Math.floor((new Date(today) - last) / 86400000);
+    if (diff > 1) state.streak = 0;
+  }
+
+  // Unlock stations
+  if (state.station1Mastery >= 10) state.station2Unlocked = true;
+  if (state.station2Mastery >= 15) state.station3Unlocked = true;
+
+  document.getElementById('streakCount').textContent = state.streak;
+  document.getElementById('totalTips').textContent = '$' + state.totalTips;
+  document.getElementById('levelNum').textContent = state.level;
+  document.getElementById('station1Progress').style.width = state.station1Mastery + '%';
+  document.getElementById('station2Progress').style.width = state.station2Mastery + '%';
+  document.getElementById('station3Progress').style.width = state.station3Mastery + '%';
+  document.getElementById('station1Badge').textContent = getBadge(state.station1Mastery);
+
+  const rank = getRank(state.level);
+  document.getElementById('chefRank').textContent = rank.name;
+  document.getElementById('avatarEmoji').textContent = rank.emoji;
+
+  // Station 2
+  if (state.station2Unlocked) {
+    document.getElementById('station2Card').classList.remove('locked');
+    document.getElementById('station2Badge').textContent = getBadge(state.station2Mastery);
+  } else {
+    document.getElementById('station2Card').classList.add('locked');
+    document.getElementById('station2Badge').textContent = '🔒';
+  }
+  // Station 3
+  if (state.station3Unlocked) {
+    document.getElementById('station3Card').classList.remove('locked');
+    document.getElementById('station3Badge').textContent = getBadge(state.station3Mastery);
+  } else {
+    document.getElementById('station3Card').classList.add('locked');
+    document.getElementById('station3Badge').textContent = '🔒';
+  }
+
+  saveState();
+}
+
+// ===== PROBLEM GENERATORS =====
+
+// --- STATION 1: Scaling Orders ---
+function generateScalingProblem(difficulty) {
+  const recipes = [
+    { name: 'pancakes', emoji: '🥞', ingredient: 'eggs', ingredientEmoji: '🥚' },
+    { name: 'cookies', emoji: '🍪', ingredient: 'cups of flour', ingredientEmoji: '🌾' },
+    { name: 'muffins', emoji: '🧁', ingredient: 'eggs', ingredientEmoji: '🥚' },
+    { name: 'tacos', emoji: '🌮', ingredient: 'cups of meat', ingredientEmoji: '🥩' },
+    { name: 'burgers', emoji: '🍔', ingredient: 'burger patties', ingredientEmoji: '🥩' },
+    { name: 'sandwiches', emoji: '🥪', ingredient: 'slices of bread', ingredientEmoji: '🍞' },
+    { name: 'pizzas', emoji: '🍕', ingredient: 'cups of cheese', ingredientEmoji: '🧀' },
+    { name: 'omelets', emoji: '🍳', ingredient: 'eggs', ingredientEmoji: '🥚' },
+    { name: 'waffles', emoji: '🧇', ingredient: 'eggs', ingredientEmoji: '🥚' },
+    { name: 'biscuits', emoji: '🫓', ingredient: 'cups of flour', ingredientEmoji: '🌾' },
+  ];
+
+  const r = recipes[Math.floor(Math.random() * recipes.length)];
+  let batchSize, perOrder, customers, perBatch;
+
+  if (difficulty <= 2) {
+    // Easy: direct multiplication
+    perOrder = 1;
+    customers = randBetween(2, 6);
+    perBatch = randBetween(1, 2);
+    batchSize = customers; // 1 batch makes exactly what 1 customer needs
+    const answer = customers * perBatch;
+    return {
+      type: 'multiple_choice',
+      skill: 'scaling_easy',
+      scenario: `You're making ${r.emoji} ${r.name}.\nEach order needs <em>${perOrder} ${r.name.slice(0, -1)}</em>.\nEach ${r.name.slice(0, -1)} uses <em>${perBatch} ${r.ingredient}</em>.\nYou have <em>${customers} customers</em>.`,
+      question: `How many ${r.ingredient} ${r.ingredientEmoji} do you need total?`,
+      answer: answer,
+      explanation: [
+        { icon: '👥', text: `${customers} customers, each gets ${perOrder}`, math: `${customers} ${r.name}` },
+        { icon: r.ingredientEmoji, text: `Each needs ${perBatch} ${r.ingredient}`, math: `${customers} × ${perBatch} = ${answer}` },
+        { icon: '✅', text: `You need ${answer} ${r.ingredient} total!`, math: '' },
+      ],
+      difficulty,
+    };
+  } else if (difficulty <= 4) {
+    // Medium: batch math
+    batchSize = randFromList([4, 6, 8, 12]);
+    perOrder = randFromList([2, 3, 4]);
+    customers = randBetween(3, 8);
+    perBatch = randBetween(1, 3);
+    const totalNeeded = customers * perOrder;
+    const batches = Math.ceil(totalNeeded / batchSize);
+    const answer = batches * perBatch;
+    return {
+      type: 'multiple_choice',
+      skill: 'scaling_medium',
+      scenario: `Your ${r.emoji} ${r.name} recipe makes <em>${batchSize} ${r.name}</em> per batch.\nIt uses <em>${perBatch} ${r.ingredient}</em> per batch.\nEach customer orders <em>${perOrder} ${r.name}</em>.\nYou have <em>${customers} customers</em>.`,
+      question: `How many ${r.ingredient} ${r.ingredientEmoji} do you need?`,
+      answer: answer,
+      explanation: [
+        { icon: '👥', text: `${customers} customers × ${perOrder} each`, math: `= ${totalNeeded} ${r.name} total` },
+        { icon: '📦', text: `Each batch makes ${batchSize}`, math: `${totalNeeded} ÷ ${batchSize} = ${batches} batch${batches > 1 ? 'es' : ''}` },
+        { icon: r.ingredientEmoji, text: `Each batch uses ${perBatch}`, math: `${batches} × ${perBatch} = ${answer} ${r.ingredient}` },
+        { icon: '✅', text: `You need ${answer} ${r.ingredient}!`, math: '' },
+      ],
+      difficulty,
+    };
+  } else {
+    // Hard: bigger numbers, more steps
+    batchSize = randFromList([6, 8, 10, 12]);
+    perOrder = randFromList([2, 3, 4, 5]);
+    customers = randBetween(8, 15);
+    perBatch = randBetween(2, 4);
+    const totalNeeded = customers * perOrder;
+    const batches = Math.ceil(totalNeeded / batchSize);
+    const answer = batches * perBatch;
+    return {
+      type: 'multiple_choice',
+      skill: 'scaling_hard',
+      scenario: `Big night! Your ${r.emoji} ${r.name} recipe makes <em>${batchSize} per batch</em> and uses <em>${perBatch} ${r.ingredient}</em> per batch.\nEach of your <em>${customers} customers</em> wants <em>${perOrder} ${r.name}</em>.`,
+      question: `How many ${r.ingredient} ${r.ingredientEmoji} do you need total?`,
+      answer: answer,
+      explanation: [
+        { icon: '👥', text: `${customers} customers × ${perOrder} each`, math: `= ${totalNeeded} ${r.name} total` },
+        { icon: '📦', text: `Recipe makes ${batchSize} per batch`, math: `${totalNeeded} ÷ ${batchSize} = ${batches} batch${batches > 1 ? 'es' : ''} (round up!)` },
+        { icon: r.ingredientEmoji, text: `${batches} batches × ${perBatch} ${r.ingredient}`, math: `= ${answer}` },
+        { icon: '✅', text: `Answer: ${answer} ${r.ingredient}!`, math: '' },
+      ],
+      difficulty,
+    };
+  }
+}
+
+// --- STATION 2: Measuring Cups ---
+function generateMeasuringProblem(difficulty) {
+  const ingredients = [
+    { name: 'milk', emoji: '🥛' },
+    { name: 'flour', emoji: '🌾' },
+    { name: 'sugar', emoji: '🍬' },
+    { name: 'butter', emoji: '🧈' },
+    { name: 'oil', emoji: '🫒' },
+    { name: 'cream', emoji: '🍶' },
+    { name: 'water', emoji: '💧' },
+  ];
+  const ing = ingredients[Math.floor(Math.random() * ingredients.length)];
+
+  if (difficulty <= 2) {
+    // Easy: simple fraction recognition/doubling
+    const fracs = [
+      { label: '1/4', value: 0.25, display: '1/4 cup' },
+      { label: '1/3', value: 1/3, display: '1/3 cup' },
+      { label: '1/2', value: 0.5, display: '1/2 cup' },
+      { label: '3/4', value: 0.75, display: '3/4 cup' },
+    ];
+    const frac = fracs[Math.floor(Math.random() * fracs.length)];
+    const multiplier = 2;
+    const result = frac.value * multiplier;
+    const resultDisplay = formatFraction(result);
+
+    return {
+      type: 'multiple_choice',
+      skill: 'fractions_easy',
+      scenario: `Your recipe calls for <em>${frac.display}</em> of ${ing.emoji} ${ing.name}.\nYou need to <em>double</em> the recipe (make 2x).`,
+      question: `How much ${ing.name} do you need?`,
+      answer: resultDisplay,
+      answerValue: result,
+      explanation: [
+        { icon: '📖', text: `Recipe calls for ${frac.display}`, math: '' },
+        { icon: '✖️', text: `Double means × 2`, math: `${frac.display} × 2 = ${resultDisplay}` },
+        { icon: '✅', text: `You need ${resultDisplay} of ${ing.name}!`, math: '' },
+      ],
+      difficulty,
+      isFraction: true,
+    };
+  } else if (difficulty <= 4) {
+    // Medium: triple, or equivalents
+    const fracs = [
+      { label: '1/4', value: 0.25, display: '1/4 cup' },
+      { label: '1/3', value: 1/3, display: '1/3 cup' },
+      { label: '1/2', value: 0.5, display: '1/2 cup' },
+    ];
+    const frac = fracs[Math.floor(Math.random() * fracs.length)];
+    const multiplier = randFromList([3, 4]);
+    const result = frac.value * multiplier;
+    const resultDisplay = formatFraction(result);
+
+    return {
+      type: 'multiple_choice',
+      skill: 'fractions_medium',
+      scenario: `You're making <em>${multiplier}x</em> the recipe.\nIt calls for <em>${frac.display}</em> of ${ing.emoji} ${ing.name} per batch.`,
+      question: `How much ${ing.name} do you need for ${multiplier} batches?`,
+      answer: resultDisplay,
+      answerValue: result,
+      explanation: [
+        { icon: '📖', text: `${frac.display} per batch`, math: '' },
+        { icon: '✖️', text: `Making ${multiplier} batches`, math: `${frac.display} × ${multiplier} = ${resultDisplay}` },
+        { icon: '✅', text: `You need ${resultDisplay} of ${ing.name}!`, math: '' },
+      ],
+      difficulty,
+      isFraction: true,
+    };
+  } else {
+    // Hard: combining fractions, cup equivalents
+    const scenarios = [
+      () => {
+        const cups1 = randFromList([0.25, 0.5, 1/3]);
+        const cups2 = randFromList([0.25, 0.5, 0.75, 1/3, 2/3]);
+        const total = cups1 + cups2;
+        return {
+          type: 'multiple_choice',
+          skill: 'fractions_hard',
+          scenario: `Your ${ing.emoji} ${ing.name} recipe needs <em>${formatFraction(cups1)} cup</em> for the batter AND <em>${formatFraction(cups2)} cup</em> for the glaze.`,
+          question: `How much ${ing.name} do you need total?`,
+          answer: formatFraction(total),
+          answerValue: total,
+          explanation: [
+            { icon: '🥣', text: `Batter: ${formatFraction(cups1)} cup`, math: '' },
+            { icon: '✨', text: `Glaze: ${formatFraction(cups2)} cup`, math: '' },
+            { icon: '➕', text: `Add them`, math: `${formatFraction(cups1)} + ${formatFraction(cups2)} = ${formatFraction(total)}` },
+            { icon: '✅', text: `Total: ${formatFraction(total)} cup(s)!`, math: '' },
+          ],
+          difficulty: 5,
+          isFraction: true,
+        };
+      }
+    ];
+    return scenarios[0]();
+  }
+}
+
+// --- STATION 3: Conversions ---
+function generateConversionProblem(difficulty) {
+  const conversions = [
+    { q: 'How many teaspoons in 1 tablespoon?', a: '3', opts: ['2', '3', '4', '6'], explanation: [
+      { icon: '🥄', text: '1 tablespoon = 3 teaspoons', math: '1 tbsp = 3 tsp' },
+    ], skill: 'convert_easy' },
+    { q: 'How many tablespoons in 1/4 cup?', a: '4', opts: ['2', '4', '8', '3'], explanation: [
+      { icon: '🥛', text: '1 cup = 16 tablespoons', math: '' },
+      { icon: '➗', text: '1/4 of 16', math: '16 ÷ 4 = 4 tbsp' },
+    ], skill: 'convert_medium' },
+    { q: 'How many cups in 1 quart?', a: '4', opts: ['2', '3', '4', '8'], explanation: [
+      { icon: '🫗', text: '1 quart = 4 cups', math: '' },
+    ], skill: 'convert_easy' },
+    { q: 'How many ounces in 1 cup?', a: '8', opts: ['4', '6', '8', '12'], explanation: [
+      { icon: '🥛', text: '1 cup = 8 fluid ounces', math: '' },
+    ], skill: 'convert_easy' },
+    { q: 'A recipe needs 2 cups of broth. You only have a 1-quart container. How much of the container do you use?', a: 'Half', opts: ['Quarter', 'Third', 'Half', 'All of it'], explanation: [
+      { icon: '🫗', text: '1 quart = 4 cups', math: '' },
+      { icon: '➗', text: 'You need 2 cups', math: '2 ÷ 4 = 1/2 the container' },
+    ], skill: 'convert_medium' },
+    { q: 'How many tablespoons in 1/2 cup?', a: '8', opts: ['4', '6', '8', '12'], explanation: [
+      { icon: '🥛', text: '1 cup = 16 tablespoons', math: '' },
+      { icon: '➗', text: '1/2 of 16', math: '16 ÷ 2 = 8 tbsp' },
+    ], skill: 'convert_medium' },
+    { q: 'You need 1 cup of butter. Each stick of butter is 1/2 cup. How many sticks?', a: '2', opts: ['1', '2', '3', '4'], explanation: [
+      { icon: '🧈', text: 'Each stick = 1/2 cup', math: '' },
+      { icon: '✖️', text: 'Need 1 cup', math: '1 ÷ 1/2 = 2 sticks' },
+    ], skill: 'convert_medium' },
+  ];
+
+  // Filter by difficulty
+  let pool;
+  if (difficulty <= 2) pool = conversions.filter(c => c.skill === 'convert_easy');
+  else pool = conversions.filter(c => c.skill === 'convert_medium');
+  if (pool.length === 0) pool = conversions;
+
+  const prob = pool[Math.floor(Math.random() * pool.length)];
+  return {
+    type: 'conversion',
+    skill: prob.skill,
+    scenario: '',
+    question: prob.q,
+    answer: prob.a,
+    options: prob.opts,
+    explanation: prob.explanation,
+    difficulty,
+  };
+}
+
+// ===== HELPERS =====
+function randBetween(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randFromList(list) { return list[Math.floor(Math.random() * list.length)]; }
+
+function formatFraction(val) {
+  if (Math.abs(val - Math.round(val)) < 0.01) return Math.round(val) + (Math.round(val) === 1 ? ' cup' : ' cups');
+  const fracs = [
+    { v: 0.25, s: '1/4 cup' }, { v: 1/3, s: '1/3 cup' }, { v: 0.5, s: '1/2 cup' },
+    { v: 2/3, s: '2/3 cup' }, { v: 0.75, s: '3/4 cup' },
+    { v: 1.25, s: '1 1/4 cups' }, { v: 4/3, s: '1 1/3 cups' }, { v: 1.5, s: '1 1/2 cups' },
+    { v: 5/3, s: '1 2/3 cups' }, { v: 1.75, s: '1 3/4 cups' },
+    { v: 2.25, s: '2 1/4 cups' }, { v: 7/3, s: '2 1/3 cups' }, { v: 2.5, s: '2 1/2 cups' },
+    { v: 8/3, s: '2 2/3 cups' }, { v: 2.75, s: '2 3/4 cups' },
+    { v: 1.0, s: '1 cup' }, { v: 2.0, s: '2 cups' }, { v: 3.0, s: '3 cups' }, { v: 4.0, s: '4 cups' },
+  ];
+  let closest = fracs[0];
+  let minDiff = 999;
+  for (const f of fracs) {
+    const d = Math.abs(val - f.v);
+    if (d < minDiff) { minDiff = d; closest = f; }
+  }
+  return closest.s;
+}
+
+function generateDistractors(answer, isFraction, answerValue) {
+  const opts = new Set();
+  opts.add(typeof answer === 'string' ? answer : String(answer));
+
+  if (isFraction && answerValue !== undefined) {
+    // Generate fraction distractors
+    const offsets = [0.25, -0.25, 0.5, -0.5, 1/3, -1/3, 1, -1];
+    let attempts = 0;
+    while (opts.size < 4 && attempts < 20) {
+      const offset = offsets[attempts % offsets.length];
+      const v = answerValue + offset;
+      if (v > 0 && v <= 5) {
+        const s = formatFraction(v);
+        if (s !== answer) opts.add(s);
+      }
+      attempts++;
+    }
+  } else {
+    const numAnswer = parseInt(answer);
+    if (!isNaN(numAnswer)) {
+      const offsets = [1, -1, 2, -2, Math.ceil(numAnswer * 0.5), -Math.ceil(numAnswer * 0.3), 3, -3, Math.ceil(numAnswer * 1.5)];
+      let attempts = 0;
+      while (opts.size < 4 && attempts < 20) {
+        const v = numAnswer + offsets[attempts % offsets.length];
+        if (v > 0) opts.add(String(v));
+        attempts++;
+      }
+    }
+  }
+
+  // Ensure we have exactly 4
+  while (opts.size < 4) opts.add(String(randBetween(1, 20)));
+
+  const arr = Array.from(opts);
+  // Shuffle
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ===== SHIFT FLOW =====
+function startShift() {
+  const today = new Date().toDateString();
+  if (state.lastPlayDate !== today) {
+    if (state.lastPlayDate) {
+      const last = new Date(state.lastPlayDate);
+      const diff = Math.floor((new Date(today) - last) / 86400000);
+      if (diff === 1) state.streak++;
+      else if (diff > 1) state.streak = 1;
+    } else {
+      state.streak = 1;
+    }
+    state.lastPlayDate = today;
+  }
+
+  // Determine difficulty based on level
+  const baseDiff = Math.min(Math.ceil(state.level / 2), 5);
+
+  // Build question queue
+  const questions = [];
+
+  // Warmup: 3 quick review questions
+  for (let i = 0; i < 3; i++) {
+    questions.push({ phase: 'warmup', ...generateScalingProblem(Math.max(1, baseDiff - 1)) });
+  }
+
+  // The Rush: 6 main questions, mix of unlocked stations
+  for (let i = 0; i < 6; i++) {
+    const stationPool = [1];
+    if (state.station2Unlocked) stationPool.push(2);
+    if (state.station3Unlocked) stationPool.push(3);
+    const station = randFromList(stationPool);
+    let prob;
+    if (station === 1) prob = generateScalingProblem(baseDiff);
+    else if (station === 2) prob = generateMeasuringProblem(baseDiff);
+    else prob = generateConversionProblem(baseDiff);
+    questions.push({ phase: 'rush', ...prob });
+  }
+
+  // Chef's Challenge: 1 harder question
+  const challengeStation = state.station2Unlocked ? randFromList([1, 2]) : 1;
+  let challengeProb;
+  if (challengeStation === 1) challengeProb = generateScalingProblem(Math.min(baseDiff + 2, 6));
+  else challengeProb = generateMeasuringProblem(Math.min(baseDiff + 2, 6));
+  questions.push({ phase: 'challenge', ...challengeProb });
+
+  shiftState = {
+    questions,
+    currentIndex: 0,
+    tips: 0,
+    correct: 0,
+    total: questions.length,
+    answeredCurrent: false,
+  };
+
+  showScreen('game');
+  renderQuestion();
+}
+
+function startStation(stationNum) {
+  if (stationNum === 2 && !state.station2Unlocked) return;
+  if (stationNum === 3 && !state.station3Unlocked) return;
+
+  const baseDiff = Math.min(Math.ceil(state.level / 2), 5);
+  const questions = [];
+  for (let i = 0; i < 8; i++) {
+    let prob;
+    if (stationNum === 1) prob = generateScalingProblem(Math.min(baseDiff + Math.floor(i / 3), 6));
+    else if (stationNum === 2) prob = generateMeasuringProblem(Math.min(baseDiff + Math.floor(i / 3), 6));
+    else prob = generateConversionProblem(Math.min(baseDiff + Math.floor(i / 3), 6));
+    questions.push({ phase: 'rush', ...prob });
+  }
+
+  shiftState = {
+    questions,
+    currentIndex: 0,
+    tips: 0,
+    correct: 0,
+    total: questions.length,
+    answeredCurrent: false,
+  };
+
+  showScreen('game');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = shiftState.questions[shiftState.currentIndex];
+  shiftState.answeredCurrent = false;
+  SFX.newOrder();
+
+  // Update header
+  const phaseNames = { warmup: '🔥 Warmup', rush: '📋 The Rush', challenge: '⭐ Chef\'s Challenge' };
+  document.getElementById('gamePhase').textContent = phaseNames[q.phase] || 'The Rush';
+  document.getElementById('shiftTips').textContent = shiftState.tips;
+
+  // Progress
+  const pct = (shiftState.currentIndex / shiftState.total) * 100;
+  document.getElementById('gameProgressFill').style.width = pct + '%';
+
+  // Difficulty label
+  const diffLabel = q.difficulty <= 2 ? ['Easy', 'diff-easy'] : q.difficulty <= 4 ? ['Medium', 'diff-medium'] : ['Hard', 'diff-hard'];
+
+  // Generate options
+  let options;
+  if (q.type === 'conversion' && q.options) {
+    options = [...q.options];
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [options[i], options[j]] = [options[j], options[i]];
+    }
+  } else {
+    options = generateDistractors(q.answer, q.isFraction, q.answerValue);
+  }
+
+  const area = document.getElementById('questionArea');
+  area.innerHTML = `
+    <div class="order-ticket">
+      <div class="ticket-header">
+        <div class="ticket-number">Order #${shiftState.currentIndex + 1} of ${shiftState.total}</div>
+        <div class="ticket-difficulty ${diffLabel[1]}">${diffLabel[0]}</div>
+      </div>
+      ${q.scenario ? `<div class="ticket-scenario">${q.scenario}</div>` : ''}
+      <div class="ticket-question">${q.question}</div>
+      <div class="answer-area">
+        <div class="answer-options" id="answerOptions">
+          ${options.map((o, i) => `<button class="answer-btn" onclick="checkAnswer(this, '${escapeHtml(String(o))}', '${escapeHtml(String(q.answer))}')">${o}</button>`).join('')}
+        </div>
+        <button class="show-me-btn" onclick="showWorkspace()">💡 Show me how</button>
+        <div class="visual-workspace" id="workspace">
+          <div class="workspace-title">Here's how to think about it:</div>
+          ${(q.explanation || []).map(s =>
+            `<div class="workspace-step">
+              <div class="step-icon">${s.icon}</div>
+              <div><span>${s.text}</span> <span class="step-math">${s.math}</span></div>
+            </div>`
+          ).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(str) {
+  return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function checkAnswer(btn, selected, correct) {
+  if (shiftState.answeredCurrent) return;
+  SFX.tap();
+  shiftState.answeredCurrent = true;
+
+  const isCorrect = selected.trim() === correct.trim();
+  const buttons = document.querySelectorAll('.answer-btn');
+
+  buttons.forEach(b => {
+    b.style.pointerEvents = 'none';
+    const btnText = b.textContent.trim();
+    if (btnText === correct.trim()) b.classList.add('correct');
+  });
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    SFX.correct();
+    setTimeout(() => SFX.tip(), 300);
+    shiftState.correct++;
+    const tipAmount = shiftState.questions[shiftState.currentIndex].phase === 'challenge' ? 5 : randBetween(1, 3);
+    shiftState.lastTipAmount = tipAmount;
+    shiftState.tips += tipAmount;
+    document.getElementById('shiftTips').textContent = shiftState.tips;
+
+    // Track skill
+    const skill = shiftState.questions[shiftState.currentIndex].skill;
+    if (skill) {
+      if (!state.skillHistory[skill]) state.skillHistory[skill] = { correct: 0, total: 0, lastSeen: Date.now() };
+      state.skillHistory[skill].correct++;
+      state.skillHistory[skill].total++;
+      state.skillHistory[skill].lastSeen = Date.now();
+    }
+
+    setTimeout(() => showFeedback(true), 400);
+  } else {
+    btn.classList.add('wrong');
+    SFX.wrong();
+
+    const skill = shiftState.questions[shiftState.currentIndex].skill;
+    if (skill) {
+      if (!state.skillHistory[skill]) state.skillHistory[skill] = { correct: 0, total: 0, lastSeen: Date.now() };
+      state.skillHistory[skill].total++;
+      state.skillHistory[skill].lastSeen = Date.now();
+    }
+
+    // Show workspace automatically on wrong answer
+    showWorkspace();
+    setTimeout(() => showFeedback(false), 1200);
+  }
+}
+
+function showWorkspace() {
+  const ws = document.getElementById('workspace');
+  ws.classList.add('visible');
+}
+
+function showFeedback(correct) {
+  const overlay = document.getElementById('feedbackOverlay');
+  const phrases = correct
+    ? ['Nice work, Chef! 🔥', 'Order up! 🛎️', 'Nailed it! 💪', 'Kitchen skills! 🍳', 'You got this! ⭐']
+    : ['Not quite! 🤔', 'Close one! 💭', 'Let\'s learn from that! 📖'];
+
+  document.getElementById('fbEmoji').textContent = correct ? '🎉' : '💡';
+  document.getElementById('fbTitle').textContent = randFromList(phrases);
+  const tipEarned = shiftState.questions[shiftState.currentIndex].phase === 'challenge' ? 5 : shiftState.lastTipAmount || 1;
+  document.getElementById('fbMsg').textContent = correct
+    ? `+$${tipEarned} tip earned!`
+    : 'Check the breakdown above. You\'ll get it next time!';
+  document.getElementById('fbBtn').className = 'feedback-btn ' + (correct ? 'fb-correct' : 'fb-wrong');
+  document.getElementById('fbBtn').textContent = shiftState.currentIndex < shiftState.total - 1 ? 'Next Order →' : 'Finish Shift';
+  overlay.classList.add('visible');
+}
+
+function closeFeedback() {
+  document.getElementById('feedbackOverlay').classList.remove('visible');
+  shiftState.currentIndex++;
+  if (shiftState.currentIndex < shiftState.total) {
+    renderQuestion();
+  } else {
+    endShift();
+  }
+}
+
+function endShift() {
+  SFX.shiftEnd();
+  state.totalShifts++;
+  const streakBonus = Math.floor(state.streak * 0.5);
+  const totalTipsEarned = shiftState.tips + streakBonus;
+  state.totalTips += totalTipsEarned;
+
+  // XP and leveling
+  state.xp += shiftState.correct * 10 + streakBonus * 5;
+  const xpToLevel = state.level * 50;
+  const oldLevel = state.level;
+  while (state.xp >= xpToLevel) {
+    state.xp -= state.level * 50;
+    state.level++;
+  }
+
+  // Station mastery
+  const accuracy = shiftState.total > 0 ? (shiftState.correct / shiftState.total) : 0;
+  state.station1Mastery = Math.min(100, state.station1Mastery + Math.floor(accuracy * 8));
+  if (state.station2Unlocked) {
+    state.station2Mastery = Math.min(100, state.station2Mastery + Math.floor(accuracy * 5));
+  }
+  if (state.station3Unlocked) {
+    state.station3Mastery = Math.min(100, state.station3Mastery + Math.floor(accuracy * 4));
+  }
+
+  saveState();
+
+  // Render review
+  const accPct = Math.round(accuracy * 100);
+  document.getElementById('reviewEmoji').textContent = accPct >= 80 ? '🌟' : accPct >= 50 ? '👍' : '💪';
+  document.getElementById('reviewTitle').textContent = accPct >= 80 ? 'Amazing Shift!' : accPct >= 50 ? 'Solid Work!' : 'Keep Going!';
+  document.getElementById('reviewSubtitle').textContent = accPct >= 80 ? 'The kitchen is lucky to have you!' : accPct >= 50 ? 'Getting stronger every shift!' : 'Every shift makes you better!';
+  document.getElementById('revOrders').textContent = `${shiftState.correct}/${shiftState.total}`;
+  document.getElementById('revAccuracy').textContent = accPct + '%';
+  document.getElementById('revTips').textContent = '$' + shiftState.tips;
+  document.getElementById('revStreakBonus').textContent = '+$' + streakBonus + (state.streak > 1 ? ` (${state.streak} day streak!)` : '');
+
+  // Rank up?
+  const oldRank = getRank(oldLevel);
+  const newRank = getRank(state.level);
+  if (newRank.name !== oldRank.name) {
+    document.getElementById('rankUpBanner').classList.add('visible');
+    document.getElementById('rankUpName').textContent = newRank.name;
+    setTimeout(() => SFX.rankUp(), 400);
+  } else {
+    document.getElementById('rankUpBanner').classList.remove('visible');
+  }
+
+  showScreen('review');
+}
+
+function backToDashboard() {
+  updateDashboard();
+  showScreen('dashboard');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ===== INIT =====
+updateDashboard();
+</script>
+</body>
+</html>
